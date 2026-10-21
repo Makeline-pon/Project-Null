@@ -18,7 +18,7 @@ By assigning employees to interact with the tree, you extract "Essence"—the pr
 - **Multi-language Support**: Fully localized in English, Simplified Chinese, and Traditional Chinese.
 - **Local Save System**: Progress is saved automatically to your browser. You can also export/import your save data as files or text strings.
 
-## 🛠️ How to Play
+##  How to Play
 Since this is a pure HTML/CSS/JS project, you can simply:
 1. Download or clone this repository.
 2. Open `index.html` in any modern web browser.
