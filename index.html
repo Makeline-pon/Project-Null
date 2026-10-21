@@ -17,6 +17,7 @@
     --accent-2: #c4453f;
     --gold: #967b56;
     --sanity: #46667d;
+    --sanity-danger: #c4453f;
     --scan: rgba(255,255,255,0.02);
   }
   *{ box-sizing: border-box; margin: 0; padding: 0; }
@@ -118,6 +119,7 @@
   .panel {
     background: var(--panel); border: 1px solid var(--line);
     position: relative; display: flex; flex-direction: column;
+    min-height: 0;
   }
   .panel::before, .panel::after {
     content: ""; position: absolute; width: 8px; height: 8px;
@@ -131,25 +133,34 @@
     padding: 8px 14px; border-bottom: 1px solid var(--line-2);
     background: linear-gradient(180deg, var(--panel-2) 0%, var(--panel) 100%);
     font-size: 9px; letter-spacing: 2px; color: var(--dim); text-transform: uppercase;
+    flex-shrink: 0;
   }
   .tag { border: 1px solid var(--line-2); padding: 1px 6px; font-size: 9px; letter-spacing: 1px; color: var(--dim); }
   .tag.danger { border-color: var(--accent); color: var(--accent-2); }
 
-  /* 树区域与缩放拖动 */
   .tree-stage {
-    position: relative; flex: 1; min-height: 380px;
-    display: grid; place-items: center; padding-top: 30px; overflow: hidden;
+    position: relative; 
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
     cursor: grab;
+    background: rgba(0,0,0,0.1);
   }
   .tree-stage.dragging { cursor: grabbing; }
   
   .tree-wrapper {
-    width: 100%; height: 100%; display: grid; place-items: center;
-    transform-origin: 0 0; /* 绝对左上角作为基准 */
+    width: 100%; height: 100%; 
+    display: flex; align-items: center; justify-content: center;
+    transform-origin: 0 0;
     will-change: transform;
   }
   .tree-stage svg {
-    width: 100%; height: 100%; max-height: 360px; display: block;
+    width: 100%; height: 100%; 
+    max-height: 100%;
+    display: block;
     filter: drop-shadow(0 0 10px rgba(0,0,0,0.8));
     pointer-events: none;
   }
@@ -171,7 +182,6 @@
   .upgrade-hitbox { cursor: pointer; transition: fill 0.2s; }
   .upgrade-hitbox:hover { fill: rgba(155, 58, 53, 0.3); }
 
-  /* 鼠标操作提示 */
   .interaction-hint {
     position: absolute; top: 16px; left: 16px;
     font-size: 10px; color: var(--dim); letter-spacing: 1px;
@@ -212,7 +222,6 @@
     50% { opacity: 0.3; text-shadow: 0 0 8px var(--accent-2); }
   }
 
-  /* 粒子特效 */
   .particle {
     position: absolute; width: 4px; height: 4px;
     background: var(--accent-2); border-radius: 50%;
@@ -239,12 +248,32 @@
   }
   .crew-card:hover { border-color: #333; border-left-color: #555; }
   .crew-card.working { border-left-color: var(--accent); }
+  
+  .crew-card.panic { 
+    border-color: var(--accent-2); 
+    border-left-color: var(--accent-2);
+    background: rgba(196, 69, 63, 0.08);
+    animation: shakeAnim 0.4s cubic-bezier(.36,.07,.19,.97) both, panicPulse 2s infinite alternate;
+  }
+  @keyframes panicPulse {
+    0% { box-shadow: inset 0 0 10px rgba(196, 69, 63, 0.2); }
+    100% { box-shadow: inset 0 0 30px rgba(196, 69, 63, 0.6); }
+  }
+
+  .crew-card.suppress-flash {
+    animation: suppressFlash 0.6s ease-out forwards;
+  }
+  @keyframes suppressFlash {
+    0% { box-shadow: inset 0 0 40px rgba(255, 255, 255, 0.8); border-color: #fff; }
+    100% { box-shadow: inset 0 0 0 rgba(255, 255, 255, 0); border-color: var(--line-2); }
+  }
 
   .crew-top { display: flex; align-items: baseline; gap: 8px; margin-bottom: 10px; }
   .crew-id { font-size: 9px; color: var(--dim); }
   .crew-name { font-size: 13px; letter-spacing: 1px; flex: 1; }
   .crew-state { font-size: 10px; color: var(--dim); letter-spacing: 1px; }
   .crew-card.working .crew-state { color: var(--accent-2); }
+  .crew-card.panic .crew-state { color: #fff; font-weight: bold; text-shadow: 0 0 5px var(--accent-2); }
 
   .crew-work-type { margin-bottom: 12px; }
   .crew-work-type select {
@@ -277,12 +306,33 @@
     flex: 1; height: 6px; background: #0b0c0d; border: 1px solid #1f2224;
     position: relative; background-image: repeating-linear-gradient(90deg, transparent, transparent 2px, #1a1d1f 2px, #1a1d1f 4px);
   }
+  
   .bar-fill {
     height: 100%; width: 0%; background: var(--accent); opacity: 0.8;
     transition: width 0.15s linear; box-shadow: 0 0 5px var(--accent);
   }
-  .bar.sanity-bar .bar-fill { background: var(--sanity); box-shadow: 0 0 5px var(--sanity); }
-  .bar.sanity-bar.low .bar-fill { background: var(--accent-2); box-shadow: 0 0 5px var(--accent-2); }
+  
+  .bar.sanity-bar .bar-fill { 
+    background: var(--sanity); 
+    box-shadow: 0 0 5px var(--sanity); 
+    transition: width 0.15s linear, background 0.3s, box-shadow 0.3s; 
+  }
+  
+  .bar.sanity-bar.low .bar-fill { 
+    background: var(--sanity-danger); 
+    animation: sanityFlash 1s infinite alternate;
+  }
+
+  @keyframes sanityFlash {
+    0% { 
+      opacity: 0.4; 
+      box-shadow: 0 0 2px var(--sanity-danger); 
+    }
+    100% { 
+      opacity: 1; 
+      box-shadow: 0 0 12px var(--sanity-danger), inset 0 0 4px var(--sanity-danger); 
+    }
+  }
 
   .percent-text, .sanity-text {
     font-size: 10px; width: 30px; text-align: right;
@@ -290,7 +340,8 @@
   }
   .percent-text { color: var(--accent-2); }
   .sanity-text { color: var(--sanity); }
-  .sanity-text.low { color: var(--accent-2); }
+  .sanity-text.low { color: var(--sanity-danger); font-weight: bold; text-shadow: 0 0 5px rgba(196,69,63,0.5); }
+  .crew-card.panic .sanity-text { color: var(--accent-2); font-weight: bold; }
 
   .btn {
     display: block; width: 100%; background: transparent;
@@ -302,11 +353,25 @@
   }
   .btn:hover { border-color: var(--accent); color: var(--accent-2); background: rgba(155, 58, 53, 0.05); }
   .btn.on { border-color: var(--accent); color: var(--accent-2); }
+  
+  .btn.suppress { border-color: var(--accent-2); color: var(--accent-2); background: rgba(196,69,63,0.1); }
+  .btn.suppress:hover { background: var(--accent-2); color: #fff; box-shadow: 0 0 10px var(--accent-2); }
+  .btn.suppress:disabled { opacity: 0.3; cursor: not-allowed; border-color: var(--line-2); color: var(--dim); background: transparent; box-shadow: none; }
 
   .hint {
     font-size: 10px; color: var(--dim); padding: 0 12px 12px;
     line-height: 1.6; border-top: 1px dashed var(--line-2); padding-top: 10px; margin: 0 10px;
     flex-shrink: 0;
+  }
+
+  .recruit-bar {
+    padding: 12px;
+    border-top: 1px dashed var(--line-2);
+    background: var(--panel);
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
   }
 
   .log-panel { margin-top: 0; flex-shrink: 0; }
@@ -365,6 +430,7 @@
   .id-name { font-family: Georgia, serif; font-size: 22px; letter-spacing: 2px; line-height: 1.2; }
   .id-state { font-size: 10px; color: var(--dim); margin-top: 4px; }
   .id-state.on { color: var(--accent-2); }
+  .id-state.panic { color: var(--accent-2); font-weight: bold; text-shadow: 0 0 5px var(--accent-2); }
 
   .stat-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line-2); border: 1px solid var(--line-2); margin-bottom: 20px; }
   .stat-grid > div { background: var(--panel-2); padding: 12px 14px; }
@@ -485,6 +551,11 @@
           <span class="tag" id="crewCount">1 UNIT</span>
         </div>
         <div class="crew-list" id="crewList"></div>
+        
+        <div class="recruit-bar">
+          <button class="btn" id="btnRecruit" style="border-color: var(--gold); color: var(--gold);">招募人员 (-<span id="recruitCost">50</span>)</button>
+        </div>
+
         <div class="hint" data-i18n="rosterHint">
           Assign units to the tree to begin extraction. Click dossier for deep-scan.
         </div>
@@ -594,6 +665,16 @@ const I18N = {
     cycleTag: "CYCLE {0}",
     standby: "STANDBY",
     observing: "EXTRACTING",
+    panic: "PANIC",
+    panicTimer: "PANIC ({0}s)",
+    panicLog: "[ERR] Unit {0} sanity depleted! Entered PANIC state.",
+    suppress: "SUPPRESS (-{0})",
+    suppressLog: "[SYS] Unit {0} suppressed. Sent to recovery.",
+    noEssenceSuppress: "NOT ENOUGH ESSENCE TO SUPPRESS!",
+    blackoutWarn: "[WARN] ESSENCE DEPLETED. BLACKOUT IMMINENT.",
+    blackoutTrigger: "[CRITICAL] BLACKOUT TRIGGERED. ALL SYSTEMS OFFLINE.",
+    blackoutEnd: "[SYS] Systems restored. Personnel back online.",
+    blackoutActive: "BLACKOUT ({0}s)",
     assign: "INITIATE_LINK",
     withdraw: "SEVER_LINK",
     level: "Level",
@@ -609,11 +690,13 @@ const I18N = {
     sideNote: "Unit assignment voluntary. Severing link resets current extraction cycle.<br><br>Dossier data subject to change.",
     logAssigned: "[DATA] Unit {0} linked to Tree. Extraction initiated.",
     logWithdrawn: "[DATA] Unit {0} disconnected. Standby.",
-    logSanityZero: "[ERR] Unit {0} sanity depleted. Emergency disconnect forced.",
     logOffline: "[SYS] Offline {0} min. Auto-extraction gained {1} Essence.",
     logLoadFail: "[ERR] Backup corrupted. Reverting to clean state.",
     logConnected: "[SYS] Terminal connected. T-00-000 \"Tree of Nihility\" stable.",
-    logNewEmployee: "[DATA] Unit D-01 on standby. Awaiting orders.",
+    logNewEmployee: "[DATA] Unit {0} on standby. Awaiting orders.",
+    logRecruit: "[SYS] New unit {0} recruited.",
+    recruitBtn: "RECRUIT UNIT (-{0})",
+    notEnoughEssence: "NOT ENOUGH ESSENCE.",
     gazeTrait: "Gaze",
     gazeDesc: "Observation discipline. Governs watch stability.",
     resolveTrait: "Resolve",
@@ -664,6 +747,16 @@ const I18N = {
     cycleTag: "循环 {0}",
     standby: "待命",
     observing: "提取中",
+    panic: "崩溃",
+    panicTimer: "崩溃 ({0}秒)",
+    panicLog: "[错误] 单位 {0} 理智耗尽！进入精神崩溃状态。",
+    suppress: "镇压 (-{0})",
+    suppressLog: "[系统] 单位 {0} 已镇压，送入休息室。",
+    noEssenceSuppress: "精华不足，无法镇压！",
+    blackoutWarn: "[警告] 精华已耗尽！即将触发全厂断电！",
+    blackoutTrigger: "[严重] 全厂断电已触发。所有系统离线。",
+    blackoutEnd: "[系统] 供电恢复。人员重新连线。",
+    blackoutActive: "断电维修 ({0}秒)",
     assign: "建立链接",
     withdraw: "断开链接",
     level: "等级",
@@ -679,11 +772,13 @@ const I18N = {
     sideNote: "单位指派为自愿行为。随时断开链接将重置当前提取周期。<br><br>档案数据可能随版本变更。",
     logAssigned: "[数据] 单位 {0} 已链接至虚无之树，开始提取。",
     logWithdrawn: "[数据] 单位 {0} 已断开链接，返回待命。",
-    logSanityZero: "[错误] 单位 {0} 理智耗尽！已强制执行紧急断开。",
     logOffline: "[系统] 离线 {0} 分钟，自动提取获得 {1} 精华。",
     logLoadFail: "[错误] 备份损坏，已恢复至初始干净状态。",
     logConnected: "[系统] 终端已连接。收容单元 T-00-000「虚无之树」状态稳定。",
-    logNewEmployee: "[数据] 单位 D-01 待命中，等待下达指令。",
+    logNewEmployee: "[数据] 单位 {0} 待命中，等待下达指令。",
+    logRecruit: "[系统] 新单位 {0} 招募成功。",
+    recruitBtn: "招募人员 (-{0})",
+    notEnoughEssence: "精华不足。",
     gazeTrait: "凝视",
     gazeDesc: "观测纪律。决定观测对象的稳定程度。",
     resolveTrait: "决心",
@@ -734,6 +829,16 @@ const I18N = {
     cycleTag: "循環 {0}",
     standby: "待命",
     observing: "提取中",
+    panic: "崩潰",
+    panicTimer: "崩潰 ({0}秒)",
+    panicLog: "[錯誤] 單位 {0} 理智耗盡！進入精神崩潰狀態。",
+    suppress: "鎮壓 (-{0})",
+    suppressLog: "[系統] 單位 {0} 已鎮壓，送入休息室。",
+    noEssenceSuppress: "精華不足，無法鎮壓！",
+    blackoutWarn: "[警告] 精華已耗盡！即將觸發全廠斷電！",
+    blackoutTrigger: "[嚴重] 全廠斷電已觸發。所有系統離線。",
+    blackoutEnd: "[系統] 供電恢復。人員重新連線。",
+    blackoutActive: "斷電維修 ({0}秒)",
     assign: "建立鏈接",
     withdraw: "斷開鏈接",
     level: "等級",
@@ -749,11 +854,13 @@ const I18N = {
     sideNote: "單位指派為自願行為。隨時斷開鏈接將重置當前提取週期。<br><br>檔案數據可能隨版本變更。",
     logAssigned: "[數據] 單位 {0} 已鏈接至虛無之樹，開始提取。",
     logWithdrawn: "[數據] 單位 {0} 已斷開鏈接，返回待命。",
-    logSanityZero: "[錯誤] 單位 {0} 理智耗盡！已強制執行緊急斷開。",
     logOffline: "[系統] 離線 {0} 分鐘，自動提取獲得 {1} 精華。",
     logLoadFail: "[錯誤] 備份損壞，已恢復至初始乾淨狀態。",
     logConnected: "[系統] 終端已連接。收容單元 T-00-000「虛無之樹」狀態穩定。",
-    logNewEmployee: "[數據] 單位 D-01 待命中，等待下達指令。",
+    logNewEmployee: "[數據] 單位 {0} 待命中，等待下達指令。",
+    logRecruit: "[系統] 新單位 {0} 招募成功。",
+    recruitBtn: "招募人員 (-{0})",
+    notEnoughEssence: "精華不足。",
     gazeTrait: "凝視",
     gazeDesc: "觀測紀律。決定觀測對象的穩定程度。",
     resolveTrait: "決心",
@@ -779,13 +886,25 @@ const I18N = {
 };
 
 const CONFIG = {
-  version: "1.3.5",
+  version: "1.5.0",
   saveKey: "project_nihil_save",
   offlineCapHours: 8,
   sanity: {
     max: 100,
     drainRate: 1,
     regenRate: 1
+  },
+  panic: {
+    essenceDrain: 2,
+    suppressCost: 20
+  },
+  blackout: {
+    triggerDelay: 5,
+    duration: 30
+  },
+  recruit: {
+    baseCost: 50,
+    costGrowth: 1.5
   }
 };
 
@@ -804,14 +923,17 @@ let lastMouseX = 0;
 let lastMouseY = 0;
 let isResetting = false;
 let isLackFeedbackActive = false;
+let lastSuppressErrorTime = 0;
 
-// 缩放与拖动数学变量
 let currentScale = 1;
 let panX = 0;
 let panY = 0;
 let isDragging = false;
 let startX = 0;
 let startY = 0;
+
+let zeroEssenceTimer = 0;
+let blackoutTimer = 0;
 
 function t(key, ...args) {
   let str = I18N[currentLang][key] || I18N["en"][key] || key;
@@ -831,7 +953,7 @@ const state = {
   essence: 0,
   totalWorks: 0,
   employees: [
-    { id: 1, name: "D-01", assigned: false, progress: 0, level: 1, workType: "gaze", sanity: CONFIG.sanity.max, traits: defaultTraits() }
+    { id: 1, name: "D-01", assigned: false, progress: 0, level: 1, workType: "gaze", sanity: CONFIG.sanity.max, traits: defaultTraits(), isPanic: false }
   ],
 };
 
@@ -851,30 +973,71 @@ function log(msg, cls = "") {
   const d = new Date();
   const ts = `${d.toLocaleTimeString("en-GB", { hour12: false })}.${String(d.getMilliseconds()).padStart(3, '0')}`;
   
-  const isGlitch = Math.random() < 0.15;
-  const glitchText = isGlitch ? ` <span class="glitch">${Math.random().toString(16).substring(2, 6).toUpperCase()}</span>` : "";
-  const pad = Math.random() < 0.2 ? "  " : "";
-
-  line.innerHTML = `<span class="t">${pad}[${ts}]</span>${msg}${glitchText}`;
+  line.innerHTML = `<span class="t">[${ts}]</span>${msg}`;
   box.prepend(line);
   while (box.children.length > 50) box.removeChild(box.lastChild);
 }
 
 function workingCount() { return state.employees.filter(e => e.assigned).length; }
+function panicCount() { return state.employees.filter(e => e.isPanic).length; }
 function getGlobalMultiplier() { return 1 + UPGRADES.root.level * 0.5; }
 
+function getRecruitCost() {
+  return Math.floor(CONFIG.recruit.baseCost * Math.pow(CONFIG.recruit.costGrowth, state.employees.length - 1));
+}
+
+function recruitEmployee() {
+  if (blackoutTimer > 0) return;
+  const cost = getRecruitCost();
+  if (state.essence < cost) {
+    log(t("notEnoughEssence"), "danger");
+    return;
+  }
+  state.essence -= cost;
+  
+  const newId = state.employees.length > 0 ? Math.max(...state.employees.map(e => e.id)) + 1 : 1;
+  const randomName = `D-${String(newId).padStart(2, "0")}`;
+
+  const newTraits = defaultTraits().map(trait => {
+    return {
+      ...trait,
+      level: Math.floor(Math.random() * 3) + 1
+    };
+  });
+
+  const newEmp = {
+    id: newId,
+    name: randomName,
+    assigned: false,
+    progress: 0,
+    level: 1,
+    workType: "gaze",
+    sanity: CONFIG.sanity.max,
+    traits: newTraits,
+    isPanic: false
+  };
+
+  state.employees.push(newEmp);
+  log(t("logRecruit", newEmp.name), "good");
+  
+  render();
+  save();
+}
+
 function getEmpRate(emp) {
-  if (!emp.assigned) return 0;
+  if (!emp.assigned || emp.isPanic || blackoutTimer > 0) return 0;
   const wt = WORK_TYPES[emp.workType] || WORK_TYPES.gaze;
   return (wt.yield / wt.duration) * getGlobalMultiplier();
 }
 
 function essencePerSecond() {
-  return state.employees.reduce((sum, emp) => sum + getEmpRate(emp), 0);
+  const gen = state.employees.reduce((sum, emp) => sum + getEmpRate(emp), 0);
+  const drain = panicCount() * CONFIG.panic.essenceDrain;
+  return gen - drain;
 }
 
 function assignEmployee(emp) {
-  if (emp.assigned) return;
+  if (emp.assigned || emp.isPanic || blackoutTimer > 0) return;
   emp.assigned = true;
   log(t("logAssigned", emp.name));
   save();
@@ -889,7 +1052,39 @@ function unassignEmployee(emp, forced = false) {
   save();
 }
 
-function toggleEmployee(emp) { emp.assigned ? unassignEmployee(emp) : assignEmployee(emp); }
+function toggleEmployee(emp) { 
+  if (emp.isPanic || blackoutTimer > 0) return;
+  emp.assigned ? unassignEmployee(emp) : assignEmployee(emp); 
+}
+
+function suppressEmployee(emp) {
+  if (!emp.isPanic || blackoutTimer > 0) return;
+  if (state.essence < CONFIG.panic.suppressCost) {
+    const now = Date.now();
+    if (now - lastSuppressErrorTime > 1500) {
+      log(t("noEssenceSuppress"), "danger");
+      lastSuppressErrorTime = now;
+    }
+    return;
+  }
+  state.essence -= CONFIG.panic.suppressCost;
+  emp.isPanic = false;
+  emp.assigned = false;
+  emp.progress = 0;
+  emp.sanity = 10;
+  log(t("suppressLog", emp.name), "good");
+  
+  const el = crewEls[emp.id];
+  if (el) {
+    el.card.classList.add("suppress-flash");
+    setTimeout(() => {
+      el.card.classList.remove("suppress-flash");
+    }, 600);
+  }
+
+  render();
+  save();
+}
 
 let lastFrame = performance.now();
 
@@ -900,15 +1095,28 @@ function tick(now) {
   lastFrame = now;
 
   if (dt > 0) {
+    let currentDrain = 0;
+
     for (const emp of state.employees) {
-      if (emp.assigned) {
+      if (emp.isPanic) {
+        currentDrain += CONFIG.panic.essenceDrain;
+        continue;
+      }
+
+      if (emp.assigned && blackoutTimer <= 0) {
         emp.sanity -= CONFIG.sanity.drainRate * dt;
-        if (emp.sanity <= 0) { emp.sanity = 0; unassignEmployee(emp, true); }
+        if (emp.sanity <= 0) { 
+          emp.sanity = 0; 
+          emp.isPanic = true;
+          emp.assigned = false;
+          emp.progress = 0;
+          log(t("panicLog", emp.name), "danger");
+        }
       } else {
         emp.sanity = Math.min(CONFIG.sanity.max, emp.sanity + CONFIG.sanity.regenRate * dt);
       }
 
-      if (!emp.assigned) continue;
+      if (!emp.assigned || blackoutTimer > 0) continue;
 
       const wt = WORK_TYPES[emp.workType] || WORK_TYPES.gaze;
       emp.progress += dt / wt.duration;
@@ -927,6 +1135,49 @@ function tick(now) {
         el.addEventListener("animationend", () => el.remove());
       }
     }
+
+    if (currentDrain > 0) {
+      state.essence -= currentDrain * dt;
+      if (state.essence < 0) state.essence = 0;
+    }
+
+    // 断电系统逻辑
+    if (blackoutTimer > 0) {
+      blackoutTimer -= dt;
+      if (blackoutTimer <= 0) {
+        blackoutTimer = 0;
+        log(t("blackoutEnd"), "good");
+        
+        // 断电结束，强制解除所有员工的恐慌，并恢复少许理智
+        state.employees.forEach(emp => {
+          if (emp.isPanic) {
+            emp.isPanic = false;
+            emp.sanity = 20;
+            emp.assigned = false;
+            emp.progress = 0;
+          }
+        });
+        
+        zeroEssenceTimer = 0;
+      }
+    } else {
+      if (state.essence <= 0) {
+        zeroEssenceTimer += dt;
+        if (zeroEssenceTimer >= CONFIG.blackout.triggerDelay) {
+          // 触发断电
+          blackoutTimer = CONFIG.blackout.duration;
+          zeroEssenceTimer = 0;
+          log(t("blackoutTrigger"), "danger");
+          
+          state.employees.forEach(emp => {
+            emp.assigned = false;
+            emp.progress = 0;
+          });
+        }
+      } else {
+        zeroEssenceTimer = 0;
+      }
+    }
   }
 
   render();
@@ -941,6 +1192,19 @@ function render() {
   document.getElementById("essence").textContent = format(state.essence);
   document.getElementById("rate").textContent = `+${format(essencePerSecond())} / ${t("sec")}`;
 
+  const recruitBtn = document.getElementById("btnRecruit");
+  const recruitCostSpan = document.getElementById("recruitCost");
+  const cost = getRecruitCost();
+  recruitCostSpan.textContent = format(cost);
+  
+  if (state.essence < cost || blackoutTimer > 0) {
+    recruitBtn.style.opacity = "0.5";
+    recruitBtn.style.cursor = "not-allowed";
+  } else {
+    recruitBtn.style.opacity = "1";
+    recruitBtn.style.cursor = "pointer";
+  }
+
   const sig = state.employees.map(e => e.id + (UPGRADES.root.level > 0 ? "_unlocked" : "_locked")).join(",");
   if (sig !== crewSignature) { buildCrew(); crewSignature = sig; }
   updateCrew();
@@ -948,8 +1212,22 @@ function render() {
   const active = workingCount() > 0;
   document.getElementById("treeStage").classList.toggle("active", active);
   const st = document.getElementById("treeStatus");
-  st.textContent = active ? t("observingStaff", workingCount()) : t("dormantNoObservers");
-  st.classList.toggle("on", active);
+  
+  if (blackoutTimer > 0) {
+    st.textContent = t("blackoutActive", Math.ceil(blackoutTimer));
+    st.classList.add("on");
+    document.getElementById("treePanel").style.opacity = "0.3";
+    document.querySelector(".crew-list").style.opacity = "0.3";
+    document.querySelector(".crew-list").style.pointerEvents = "none";
+    document.getElementById("btnRecruit").style.pointerEvents = "none";
+  } else {
+    st.textContent = active ? t("observingStaff", workingCount()) : t("dormantNoObservers");
+    st.classList.toggle("on", active);
+    document.getElementById("treePanel").style.opacity = "1";
+    document.querySelector(".crew-list").style.opacity = "1";
+    document.querySelector(".crew-list").style.pointerEvents = "auto";
+    document.getElementById("btnRecruit").style.pointerEvents = "auto";
+  }
 
   document.getElementById("perWork").textContent = Math.floor(WORK_TYPES.gaze.yield * getGlobalMultiplier());
   document.getElementById("workTime").textContent = WORK_TYPES.gaze.duration;
@@ -981,7 +1259,7 @@ function buildCrew() {
         <span class="crew-state">${t("standby")}</span>
       </div>
       <div class="crew-work-type ${unlocked ? '' : 'hidden'}">
-        <select class="wt-select" ${emp.assigned ? 'disabled' : ''}>
+        <select class="wt-select" ${emp.assigned || emp.isPanic ? 'disabled' : ''}>
           ${optionsHtml}
         </select>
       </div>
@@ -995,7 +1273,15 @@ function buildCrew() {
     `;
 
     const btn = card.querySelector(".btn");
-    btn.addEventListener("click", (e) => { e.stopPropagation(); toggleEmployee(emp); });
+    btn.addEventListener("click", (e) => { 
+      e.stopPropagation(); 
+      if (blackoutTimer > 0) return;
+      if (emp.isPanic) {
+        suppressEmployee(emp);
+      } else {
+        toggleEmployee(emp); 
+      }
+    });
 
     const select = card.querySelector(".wt-select");
     if (select) {
@@ -1030,24 +1316,50 @@ function updateCrew() {
     if (!el) continue;
 
     el.card.classList.toggle("working", emp.assigned);
-    el.stateText.textContent = emp.assigned ? t("observing") : t("standby");
+    el.card.classList.toggle("panic", emp.isPanic);
     
-    const pPct = Math.max(0, Math.min(100, Math.round(emp.progress * 100)));
-    el.progressFill.style.width = pPct + "%";
-    el.percentText.textContent = pPct + "%";
-    
-    el.btn.textContent = emp.assigned ? t("withdraw") : t("assign");
-    el.btn.classList.toggle("on", emp.assigned);
-    
-    const sPct = Math.max(0, Math.min(100, Math.round((emp.sanity / CONFIG.sanity.max) * 100)));
-    el.sanityFill.style.width = sPct + "%";
-    el.sanityText.textContent = sPct + "%";
-    
-    const isLow = sPct < 30;
-    el.sanityBar.classList.toggle("low", isLow);
-    el.sanityText.classList.toggle("low", isLow);
+    if (blackoutTimer > 0) {
+      el.stateText.textContent = t("blackoutActive", Math.ceil(blackoutTimer));
+      el.btn.disabled = true;
+      el.btn.className = "btn";
+      if (el.select) el.select.disabled = true;
+      el.card.style.pointerEvents = "none";
+    } else {
+      el.card.style.pointerEvents = "auto";
+      if (emp.isPanic) {
+        el.stateText.textContent = t("panic");
+        el.btn.textContent = t("suppress", CONFIG.panic.suppressCost);
+        el.btn.className = "btn suppress";
+        el.btn.disabled = state.essence < CONFIG.panic.suppressCost;
+        
+        el.progressFill.style.width = "0%";
+        el.percentText.textContent = "0%";
+        el.sanityFill.style.width = "0%";
+        el.sanityText.textContent = "0%";
+        el.sanityBar.classList.add("low");
+        el.sanityText.classList.add("low");
+        if (el.select) el.select.disabled = true;
+      } else {
+        el.stateText.textContent = emp.assigned ? t("observing") : t("standby");
+        el.btn.textContent = emp.assigned ? t("withdraw") : t("assign");
+        el.btn.className = "btn" + (emp.assigned ? " on" : "");
+        el.btn.disabled = false;
+        
+        const pPct = Math.max(0, Math.min(100, Math.round(emp.progress * 100)));
+        el.progressFill.style.width = pPct + "%";
+        el.percentText.textContent = pPct + "%";
+        
+        const sPct = Math.max(0, Math.min(100, Math.round((emp.sanity / CONFIG.sanity.max) * 100)));
+        el.sanityFill.style.width = sPct + "%";
+        el.sanityText.textContent = sPct + "%";
+        
+        const isLow = sPct < 30;
+        el.sanityBar.classList.toggle("low", isLow);
+        el.sanityText.classList.toggle("low", isLow);
 
-    if (el.select) el.select.disabled = emp.assigned;
+        if (el.select) el.select.disabled = emp.assigned;
+      }
+    }
   }
 }
 
@@ -1140,8 +1452,13 @@ function updateDossierLive() {
 
   const st = document.getElementById("dossierState");
   if (st) {
-    st.textContent = emp.assigned ? t("observing") : t("standby");
-    st.classList.toggle("on", emp.assigned);
+    if (emp.isPanic) {
+      st.textContent = t("panic");
+      st.className = "id-state panic";
+    } else {
+      st.textContent = emp.assigned ? t("observing") : t("standby");
+      st.className = "id-state" + (emp.assigned ? " on" : "");
+    }
   }
 
   const contrib = document.getElementById("dossierContrib");
@@ -1238,9 +1555,6 @@ function spawnParticles(x, y) {
 }
 
 function triggerLackFeedback() {
-  if (isLackFeedbackActive) return;
-  isLackFeedbackActive = true;
-
   const tooltip = document.getElementById("nodeTooltip");
   const cost = tooltip.querySelector(".tt-cost");
   
@@ -1252,21 +1566,20 @@ function triggerLackFeedback() {
   tooltip.classList.add("shake");
   cost.classList.add("flash");
   
-  const originalText = cost.textContent;
   const originalClass = cost.className;
-  
   cost.textContent = t("upNoResource");
   cost.classList.add("danger");
   
-  setTimeout(() => {
-    cost.textContent = originalText;
+  clearTimeout(cost._timer);
+  cost._timer = setTimeout(() => {
+    cost.textContent = originalClass.includes("danger") ? t("upNoResource") : t("upCost", format(UPGRADES.root.baseCost));
     cost.className = originalClass;
-    isLackFeedbackActive = false;
     refreshTooltip();
   }, 1200);
 }
 
 function buyUpgrade(id) {
+  if (blackoutTimer > 0) return;
   const up = UPGRADES[id];
   if (!up || up.level >= up.maxLevel) return;
 
@@ -1287,6 +1600,7 @@ function buyUpgrade(id) {
 }
 
 function buyMaxUpgrade(id) {
+  if (blackoutTimer > 0) return;
   const up = UPGRADES[id];
   if (!up || up.level >= up.maxLevel) return;
 
@@ -1320,8 +1634,6 @@ function updateTooltipContent(id) {
   tooltip.querySelector(".tt-desc").innerHTML = t(up.descKey);
   const cost = tooltip.querySelector(".tt-cost");
 
-  if (isLackFeedbackActive) return;
-
   if (up.level >= up.maxLevel) {
     cost.textContent = t("upMaxLevel");
     cost.className = "tt-cost";
@@ -1352,9 +1664,6 @@ function hideTooltip() {
   tooltip.classList.remove("show"); tooltip.setAttribute("data-active-id", "");
 }
 
-// ==========================================
-// 终极方案：直接用 window 监听，暴力锁定坐标
-// ==========================================
 const treeStage = document.getElementById("treeStage");
 const treeWrapper = document.getElementById("treeWrapper");
 
@@ -1362,14 +1671,11 @@ function applyTransform() {
   treeWrapper.style.transform = `translate(${panX}px, ${panY}px) scale(${currentScale})`;
 }
 
-// 禁用右键菜单
 treeStage.addEventListener("contextmenu", e => e.preventDefault());
 
-// 右键拖拽平移
 treeStage.addEventListener("mousedown", (e) => {
   if (e.button === 2) { 
     isDragging = true;
-    // 记录点击时的起点偏移
     startX = e.clientX - panX;
     startY = e.clientY - panY;
     hideTooltip();
@@ -1394,26 +1700,20 @@ window.addEventListener("mouseup", (e) => {
   }
 });
 
-// 全局监听滚轮，过滤树区域
 window.addEventListener("wheel", (e) => {
   const rect = treeStage.getBoundingClientRect();
-  
-  // 检查鼠标是否在树面板范围内
   if (e.clientX >= rect.left && e.clientX <= rect.right && 
       e.clientY >= rect.top && e.clientY <= rect.bottom) {
     
-    e.preventDefault(); // 拦截页面滚动
+    e.preventDefault();
     
-    // 每次滚动缩放 10% 左右
     const delta = e.deltaY > 0 ? -0.1 : 0.1;
     let newScale = currentScale * (1 + delta);
     newScale = Math.max(0.2, Math.min(5, newScale));
     
-    // 计算相对于 treeStage 的鼠标绝对坐标
     const mouseX = e.clientX - rect.left;
     const mouseY = e.clientY - rect.top;
     
-    // 核心公式：根据新旧缩放比例，重新计算平移量，让缩放中心锁定在鼠标上
     panX = mouseX - (mouseX - panX) * (newScale / currentScale);
     panY = mouseY - (mouseY - panY) * (newScale / currentScale);
     
@@ -1446,6 +1746,7 @@ function load() {
         progress: Number(e.progress) || 0, level: Number(e.level) || 1,
         workType: e.workType || "gaze",
         sanity: typeof e.sanity === "number" ? e.sanity : CONFIG.sanity.max,
+        isPanic: !!e.isPanic,
         traits: Array.isArray(e.traits) && e.traits.length ? e.traits.map(t => {
               const def = defaultTraits().find(d => d.key === t.key);
               return { key: t.key, nameKey: t.nameKey || (def ? def.nameKey : "gazeTrait"), level: t.level, max: t.max, descKey: t.descKey || (def ? def.descKey : "gazeDesc") };
@@ -1581,6 +1882,8 @@ document.getElementById("btnHardReset").addEventListener("click", () => {
     window.location.href = window.location.pathname + "?purged=" + Date.now();
   }
 });
+
+document.getElementById("btnRecruit").addEventListener("click", recruitEmployee);
 
 window.addEventListener("beforeunload", () => { if (!isResetting) save(); });
 document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden" && !isResetting) save(); });
